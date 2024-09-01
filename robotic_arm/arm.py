@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 
+import rospy
+from std_msgs.msg import Bool
 import serial
 import time
 import math
 
 # Initialize the serial port
-port = "/dev/ttyUSB0"  # define particular port used
+port = "/dev/ttyUSB1"  # define particular port used
 ser = serial.Serial(port, 1000000)  # define serial port
 ser.close()  # close port if previously open
 ser.open()  # open port
 print(ser.isOpen())  # make sure we could open the port!
+
+# Initialize ROS node and publisher
+rospy.init_node('servo_controller', anonymous=True)
+node_complete_pub = rospy.Publisher('/node_complete', Bool, queue_size=10)
 
 # Define functions to calculate the Goal Position
 def GoalPositionValH(angle):
@@ -85,25 +91,26 @@ try:
     move_servo(3, 260, speed=128)  # Initialize base to 260 degrees with slow speed
 
     # Move gripper from 180 to 140 degrees with slower speed
-    control_gripper(1, 140, speed=64)
-    # Move gripper back to 180 degrees with slow speed
-    control_gripper(1, 180, speed=128)
-
+    control_gripper(1, 140, speed=80)
+    
     # Move joint (ID 6) to 200 degrees with slower speed, then to 90 degrees
-    move_servo(6, 200, speed=64)
+    move_servo(6, 300, speed=240)
     move_servo(6, 90, speed=128)
 
     # Move base (ID 3) from 260 to 210 degrees with slower speed
-    move_servo(3, 210, speed=128)
+    move_servo(3, 210, speed=100)
 
     # Return to initial positions
-    control_gripper(1, 180, speed=128)  # Gripper back to 180 degrees with slow speed
-    move_servo(6, 40, speed=128)  # Joint back to 40 degrees with slow speed
-    move_servo(3, 260, speed=128)  # Base back to 260 degrees with slow speed
+    #control_gripper(1, 180, speed=128)  # Gripper back to 180 degrees with slow speed
+    #move_servo(3, 260, speed=128)  # Base back to 260 degrees with slow speed
+    #move_servo(6, 40, speed=128)  # Joint back to 40 degrees with slow speed
+
+    # Publish True to indicate that the sequence is complete
+    node_complete_pub.publish(True)
+    rospy.loginfo("Published completion message to /node_complete")
 
 except KeyboardInterrupt:
     print("Stopping the servo control")
 
 finally:
     ser.close()  # Close the serial port when done
-
