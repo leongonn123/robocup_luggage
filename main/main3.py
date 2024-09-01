@@ -27,7 +27,7 @@ class RobotManager:
 
     def start_node(self, node_name, script_path):
         rospy.loginfo(f"Starting {node_name}...")
-        return subprocess.Popen(['rosrun', 'robo_navi', script_path], preexec_fn=os.setsid)
+        return subprocess.Popen(['rosrun', 'take_bag', script_path], preexec_fn=os.setsid)
 
     def stop_node(self, process, node_name):
         if process.poll() is None:  # Check if the process is still running
@@ -90,17 +90,24 @@ if __name__ == "__main__":
     manager = RobotManager()
     
     try:
-        play_audio('/home/leongonn/r1_wiki_ws/src/robo_navi/src/test3/audio/audio2.wav')  # Ensure the file is in .wav format
-        first_process = manager.start_launch('your_package', 'first_launch_file.launch')
+        play_audio('/home/charmander/catkin_ws/src/main/src/main/audio/audio2.wav')  # Ensure the file is in .wav format
+        
+        first_process = manager.start_launch('main', 'point_bag.launch')
         manager.wait_for_completion()
-        manager.stop_launch(first_process, 'first_launch_file.launch')
+        manager.stop_launch(first_process, 'point_bag.launch')
 
-        second_process = manager.start_launch('your_package', 'second_launch_file.launch')
+        second_process = manager.start_launch('main', 'approach_bag.launch')
         manager.wait_for_completion()
-        manager.stop_launch(second_process, 'second_launch_file.launch')
-    
+        manager.stop_launch(second_process, 'approach_bag.launch')
+        
+        # Using rosrun to start a Python script as a node
+        third_process = manager.start_node('take_bag', 'arm.py')  # Ensure 'arm' is your correct package name, and 'arm.py' is your script
+        manager.wait_for_completion()
+        manager.stop_node(third_process, 'arm')
+        
+        play_audio('/home/charmander/catkin_ws/src/main/src/main/audio/audio3.wav')
+
     except rospy.ROSInterruptException:
         rospy.logerr("ROS Interrupt Exception! Shutting down nodes.")
     
     rospy.loginfo("Main node operation completed.")
-
