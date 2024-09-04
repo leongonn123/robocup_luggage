@@ -5,18 +5,18 @@ from std_msgs.msg import Float32, Bool
 from geometry_msgs.msg import Twist
 
 class TurtleBotApproach:
-    def __init__(self):
+    def _init_(self):
         rospy.init_node('turtlebot_proportional_control_node')
         self.vel_pub = rospy.Publisher('/mobile_base/commands/velocity', Twist, queue_size=10)
         self.reach_distance_pub = rospy.Publisher('/reach_distance', Bool, queue_size=10)
         rospy.Subscriber('/bag_distance', Float32, self.distance_callback)
         rospy.Subscriber('/bag_angle', Float32, self.angle_callback)
 
-        self.target_distance = 0.15  # Target distance in meters
+        self.target_distance = 0.23  # Target distance in meters
         self.kp_dist = 0.4  # Proportional gain for distance
-        self.kp_ang = 2.0  # Proportional gain for angle
+        self.kp_ang = 6.0  # Proportional gain for angle
         self.kd_dist = 0.25  # Derivative gain for distance
-        self.kd_ang = 0.5  # Derivative gain for angle
+        self.kd_ang = 3.0  # Derivative gain for angle
         self.ki_dist = 0.1  # Integral gain for distance
         self.ki_ang = 0.1  # Integral gain for angle
 
@@ -61,7 +61,7 @@ class TurtleBotApproach:
         control_output_dist = (self.kp_dist * error_dist + self.kd_dist * derivative_dist + self.ki_dist * self.integral_dist)
         control_output_ang = (self.kp_ang * error_ang + self.kd_ang * derivative_ang + self.ki_ang * self.integral_ang)
 
-        if abs(error_dist) <= 0.05:
+        if abs(error_dist) <= 0.03:
             if not self.has_reached_distance:
                 rospy.loginfo("Target distance reached. Stopping robot.")
                 self.cmd_vel.linear.x = 0
@@ -80,7 +80,7 @@ class TurtleBotApproach:
     def run(self):
         rospy.spin()
 
-if __name__ == '__main__':
+if _name_ == '_main_':
     try:
         turtlebot_approach = TurtleBotApproach()
         turtlebot_approach.run()
