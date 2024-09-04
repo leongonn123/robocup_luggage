@@ -80,7 +80,7 @@ class TurtleBotApproach:
     def run(self):
         rospy.spin()
 
-if _name_ == '_main_':
+if __name__ == '_main_':
     try:
         turtlebot_approach = TurtleBotApproach()
         turtlebot_approach.run()
