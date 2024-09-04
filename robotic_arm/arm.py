@@ -79,26 +79,47 @@ def move_servo(id, angle, speed=128):
 
 # Function to control the gripper with angle constraint
 def control_gripper(id, angle, speed=128):
-    if 140 <= angle <= 180:
+    if 140 <= angle <= 200:
         move_servo(id, angle, speed)
     else:
         print(f"Gripper angle {angle} is out of range. Must be between 140 and 180 degrees.")
 
 try:
     # Initialize positions
-    control_gripper(1, 180, speed=64)  # Initialize gripper to 180 degrees with very slow speed
-    move_servo(6, 40, speed=128)  # Initialize joint to 40 degrees with slow speed
-    move_servo(3, 260, speed=128)  # Initialize base to 260 degrees with slow speed
-
-    # Move gripper from 180 to 140 degrees with slower speed
+    #control_gripper(1, 180, speed=64)  # Initialize gripper to 180 degrees with very slow speed
+    #move_servo(6, 40, speed=128)  # Initialize joint to 40 degrees with slow speed
+    #move_servo(3, 220, speed=128)  # Initialize base to 260 degrees with slow speed
+    
+    #rospy.sleep(2)
+    
     control_gripper(1, 140, speed=80)
     
+    move_servo(3, 80, speed=100)
+    
+    rospy.sleep(0.5)
+    
+    move_servo(6, 80, speed=128)
+    
+    rospy.sleep(3)
+    
+    control_gripper(1, 200, speed=80)
+    
+    rospy.sleep(1)
+    
+    move_servo(6, 100, speed=128)
+    move_servo(3, 160, speed=128)
+    
+    rospy.sleep(10)
+    
+    # Move gripper from 180 to 140 degrees with slower speed
+    # control_gripper(1, 140, speed=80)
+    
     # Move joint (ID 6) to 200 degrees with slower speed, then to 90 degrees
-    move_servo(6, 300, speed=240)
-    move_servo(6, 90, speed=128)
+    #move_servo(6, 300, speed=240)
+    #move_servo(6, 90, speed=128)
 
     # Move base (ID 3) from 260 to 210 degrees with slower speed
-    move_servo(3, 210, speed=100)
+    #move_servo(3, 210, speed=100)
 
     # Return to initial positions
     #control_gripper(1, 180, speed=128)  # Gripper back to 180 degrees with slow speed
