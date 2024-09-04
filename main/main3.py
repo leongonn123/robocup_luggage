@@ -27,15 +27,20 @@ class RobotManager:
 
     def start_node(self, node_name, script_path):
         rospy.loginfo(f"Starting {node_name}...")
-        return subprocess.Popen(['rosrun', 'take_bag', script_path], preexec_fn=os.setsid)
+        return subprocess.Popen(['rosrun', node_name, script_path], preexec_fn=os.setsid)
 
-    def stop_node(self, process, node_name):
+    def stop_node(self, process, node_name, timeout=10):
         if process.poll() is None:  # Check if the process is still running
             rospy.loginfo(f"Stopping {node_name}...")
             os.killpg(os.getpgid(process.pid), signal.SIGTERM)  # Terminate the process group
-            process.wait()
+            try:
+                process.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                rospy.logwarn(f"{node_name} did not terminate in time; force killing.")
+                os.killpg(os.getpgid(process.pid), signal.SIGKILL)  # Force kill if not terminated after timeout
         else:
             rospy.logwarn(f"{node_name} process already exited or was never started.")
+
 
     def start_launch(self, package, launch_file):
         rospy.loginfo(f"Starting launch file {launch_file} from package {package}")
@@ -90,22 +95,58 @@ if __name__ == "__main__":
     manager = RobotManager()
     
     try:
-        play_audio('/home/charmander/catkin_ws/src/main/src/main/audio/audio2.wav')  # Ensure the file is in .wav format
-        
+        #launch lidar files
+        #start_process = manager.start_launch('main', 'navi.launch')
+
+        play_audio('/home/charmander/catkin_ws/src/main/src/main/audio/audio2.wav')
+
         first_process = manager.start_launch('main', 'point_bag.launch')
         manager.wait_for_completion()
         manager.stop_launch(first_process, 'point_bag.launch')
-
+        
+        play_audio('/home/charmander/catkin_ws/src/main/src/main/audio/takebag.wav')
+        
         second_process = manager.start_launch('main', 'approach_bag.launch')
         manager.wait_for_completion()
         manager.stop_launch(second_process, 'approach_bag.launch')
         
-        # Using rosrun to start a Python script as a node
-        third_process = manager.start_node('take_bag', 'arm.py')  # Ensure 'arm' is your correct package name, and 'arm.py' is your script
+        third_process = manager.start_launch('main', 'arm_rotate.launch')
         manager.wait_for_completion()
-        manager.stop_node(third_process, 'arm')
+        manager.stop_launch(third_process, 'arm_rotate.launch')
+        
+        rospy.sleep(1)
+        
+        rotate_process = manager.start_node('take_bag', 'rotation.py')
+        manager.wait_for_completion()
+        manager.stop_node(rotate_process, 'rotate_node')
+        
+        rotate_process = manager.start_node('follow_me', 'backward.py')
+        manager.wait_for_completion()
+        manager.stop_node(rotate_process, 'backward_node')
         
         play_audio('/home/charmander/catkin_ws/src/main/src/main/audio/audio3.wav')
+
+        fourth_process = manager.start_launch('follow_me', 'follow_me.launch')
+        rospy.sleep(100)
+        fifth_process = manager.start_node('follow_me', 'follow_stop.py')
+        manager.wait_for_completion()
+        manager.stop_launch(fourth_process, 'follow_me.launch')
+        manager.stop_node(fifth_process, 'stop_node')
+        
+        rotate_process = manager.start_node('take_bag', 'rotation.py')
+        manager.wait_for_completion()
+        manager.stop_node(rotate_process, 'rotate_node')
+        
+        drop_process = manager.start_launch('main', 'drop_rotate.launch')
+        manager.wait_for_completion()
+        manager.stop_launch(drop_process, 'drop_node')
+        
+        # run navigation scripts
+        sixth_process = manager.start_node('navigation', 'navigation.py')
+        manager.wait_for_completion()
+        manager.stop_node(sixth_process, 'reach_node')
+
+        rospy.sleep
 
     except rospy.ROSInterruptException:
         rospy.logerr("ROS Interrupt Exception! Shutting down nodes.")
